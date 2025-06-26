@@ -14,6 +14,7 @@ import {
 import {
   Add as AddIcon
 } from '@mui/icons-material';
+import { Transaction as SharedTransaction } from '../shared-types';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -29,11 +30,9 @@ interface SP500Data {
   lastUpdated: string;
 }
 
-interface Transaction {
+// Extended Transaction interface with id and description for client-side management
+interface Transaction extends SharedTransaction {
   id: string;
-  date: string;
-  amount: number;
-  type: 'deposit' | 'withdrawal';
   description?: string;
 }
 

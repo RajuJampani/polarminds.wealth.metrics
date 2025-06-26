@@ -1,8 +1,22 @@
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
-const NodeCache = require('node-cache');
-require('dotenv').config();
+import express, { Request, Response } from 'express';
+import cors from 'cors';
+import axios from 'axios';
+import NodeCache from 'node-cache';
+import dotenv from 'dotenv';
+import {
+  MarketIndices,
+  CalculationRequest,
+  CalculationResult,
+  Transaction,
+  MarketDataResponse,
+  MarketIndexInfo,
+  HistoricalReturns,
+  AllHistoricalReturns,
+  MonthlyDataPoint,
+  YearlyDataPoint
+} from './shared-types';
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -14,7 +28,7 @@ app.use(cors());
 app.use(express.json());
 
 // Market indices historical average returns
-const MARKET_INDICES = {
+const MARKET_INDICES: MarketIndices = {
   sp500: {
     name: 'S&P 500',
     averageReturn: 0.10,
@@ -84,24 +98,26 @@ const MARKET_INDICES = {
 };
 
 // Get market index data
-app.get('/api/market-data/:index?', async (req, res) => {
+app.get('/api/market-data/:index?', async (req: Request, res: Response): Promise<void> => {
   try {
     const { startDate, endDate } = req.query;
     const index = req.params.index || 'sp500';
     
     if (!MARKET_INDICES[index]) {
-      return res.status(400).json({ error: 'Invalid market index' });
+      res.status(400).json({ error: 'Invalid market index' });
+      return;
     }
     
     const cacheKey = `${index}-data-${startDate}-${endDate}`;
-    const cachedData = cache.get(cacheKey);
+    const cachedData = cache.get<MarketDataResponse>(cacheKey);
     
     if (cachedData) {
-      return res.json(cachedData);
+      res.json(cachedData);
+      return;
     }
 
     // Generate realistic market data based on historical trends
-    const historicalData = generateRealisticMarketData(index, startDate, endDate);
+    const historicalData = generateRealisticMarketData(index, startDate as string, endDate as string);
     
     cache.set(cacheKey, historicalData);
     res.json(historicalData);
@@ -112,13 +128,14 @@ app.get('/api/market-data/:index?', async (req, res) => {
 });
 
 // Legacy S&P 500 endpoint for backward compatibility
-app.get('/api/sp500-data', async (req, res) => {
+app.get('/api/sp500-data', async (req: Request, res: Response): Promise<void> => {
   try {
     const index = 'sp500';
     const marketData = MARKET_INDICES[index];
     
     if (!marketData) {
-      return res.status(404).json({ error: 'Market index not found' });
+      res.status(404).json({ error: 'Market index not found' });
+      return;
     }
 
     res.json({
@@ -135,9 +152,9 @@ app.get('/api/sp500-data', async (req, res) => {
  });
 
 // Get available market indices
-app.get('/api/market-indices', (req, res) => {
+app.get('/api/market-indices', (req: Request, res: Response): void => {
   try {
-    const indices = Object.keys(MARKET_INDICES).map(key => ({
+    const indices: MarketIndexInfo[] = Object.keys(MARKET_INDICES).map(key => ({
       id: key,
       name: MARKET_INDICES[key].name,
       averageReturn: MARKET_INDICES[key].averageReturn
@@ -150,7 +167,7 @@ app.get('/api/market-indices', (req, res) => {
 });
 
 // Calculate compound interest with market index returns using real dates
-app.post('/api/calculate-compound', (req, res) => {
+app.post('/api/calculate-compound', (req: Request, res: Response): void => {
   try {
     const { 
       initialAmount, 
@@ -167,30 +184,33 @@ app.post('/api/calculate-compound', (req, res) => {
 
     // Validate that we have either an initial amount or transactions
     if ((startingAmount === undefined || startingAmount === null) && (!transactions || transactions.length === 0)) {
-      return res.status(400).json({ error: 'Either initial amount or transactions are required' });
+      res.status(400).json({ error: 'Either initial amount or transactions are required' });
+      return;
     }
     
     if (!startDate) {
-      return res.status(400).json({ error: 'Start date is required' });
+      res.status(400).json({ error: 'Start date is required' });
+      return;
     }
 
     const index = marketIndex || 'sp500';
     if (!MARKET_INDICES[index]) {
-      return res.status(400).json({ error: 'Invalid market index' });
+      res.status(400).json({ error: 'Invalid market index' });
+      return;
     }
 
     // Validate transactions
-    const validTransactions = transactions.filter(t => 
+    const validTransactions: Transaction[] = transactions.filter((t: any) => 
       t && t.date && t.amount && t.type && 
       (t.type === 'deposit' || t.type === 'withdrawal') &&
-      !isNaN(parseFloat(t.amount))
-    ).map(t => ({
+      !isNaN(parseFloat(t.amount.toString()))
+    ).map((t: any) => ({
       ...t,
-      amount: parseFloat(t.amount)
+      amount: parseFloat(t.amount.toString())
     }));
 
     const result = calculateCompoundInterestWithDates(
-      parseFloat(startingAmount),
+      parseFloat(startingAmount?.toString() || '0'),
       validTransactions,
       startDate,
       endDate || new Date().toISOString().split('T')[0],
@@ -205,13 +225,13 @@ app.post('/api/calculate-compound', (req, res) => {
   }
 });
 
-function generateRealisticMarketData(index, startDate, endDate) {
+function generateRealisticMarketData(index: string, startDate?: string, endDate?: string): MarketDataResponse {
   const start = new Date(startDate || '1990-01-01');
   const end = new Date(endDate || new Date());
   const data = [];
   
   // Historical returns for different market indices
-  const historicalReturns = {
+  const historicalReturns: AllHistoricalReturns = {
     sp500: {
       1990: 0.0310, 1991: 0.3047, 1992: 0.0762, 1993: 0.1008, 1994: 0.0132,
       1995: 0.3758, 1996: 0.2296, 1997: 0.3336, 1998: 0.2858, 1999: 0.2104,
@@ -304,17 +324,24 @@ function generateRealisticMarketData(index, startDate, endDate) {
   };
 }
 
-function calculateCompoundInterestWithDates(principal, transactions, startDate, endDate, useHistoricalData, marketIndex = 'sp500') {
+function calculateCompoundInterestWithDates(
+  principal: number, 
+  transactions: Transaction[], 
+  startDate: string, 
+  endDate: string, 
+  useHistoricalData: boolean, 
+  marketIndex: string = 'sp500'
+): CalculationResult {
   // Parse dates properly to avoid timezone issues
   const start = new Date(startDate);
   start.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
   const end = new Date(endDate);
   end.setHours(12, 0, 0, 0);
-  const monthlyData = [];
-  const yearlyData = [];
+  const monthlyData: MonthlyDataPoint[] = [];
+  const yearlyData: YearlyDataPoint[] = [];
   
   // Get historical returns for the specified market index
-  const allHistoricalReturns = {
+  const allHistoricalReturns: AllHistoricalReturns = {
     sp500: {
       1990: 0.0310, 1991: 0.3047, 1992: 0.0762, 1993: 0.1008, 1994: 0.0132,
       1995: 0.3758, 1996: 0.2296, 1997: 0.3336, 1998: 0.2858, 1999: 0.2104,
@@ -357,7 +384,7 @@ function calculateCompoundInterestWithDates(principal, transactions, startDate, 
   const defaultReturn = MARKET_INDICES[marketIndex]?.averageReturn || MARKET_INDICES.sp500.averageReturn;
   
   // Sort transactions by date
-  const sortedTransactions = transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+  const sortedTransactions = transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   
   let currentAmount = principal;
   let currentYear = start.getFullYear();
@@ -456,8 +483,6 @@ function calculateCompoundInterestWithDates(principal, transactions, startDate, 
   
   const finalAmount = currentAmount;
   
-
-  
   // Calculate gross activity metrics
   // totalDeposits is already calculated in the loop above
   
@@ -477,7 +502,7 @@ function calculateCompoundInterestWithDates(principal, transactions, startDate, 
     parseInt(year) >= start.getFullYear() && parseInt(year) <= end.getFullYear()
   );
   const avgReturn = years.reduce((sum, year) => 
-    sum + (historicalReturns[year] || defaultReturn), 0
+    sum + (historicalReturns[parseInt(year)] || defaultReturn), 0
   ) / years.length;
   
   return {
