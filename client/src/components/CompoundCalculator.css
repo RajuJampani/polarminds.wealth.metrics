@@ -98,8 +98,6 @@
 
 .input-wrapper input[type="number"]:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .unit-label {
@@ -317,8 +315,6 @@
 .transaction-type:focus,
 .transaction-amount:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .add-transaction-btn {
@@ -652,8 +648,6 @@
 .transaction-type-modern:focus,
 .transaction-amount-modern:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .amount-input-modern {

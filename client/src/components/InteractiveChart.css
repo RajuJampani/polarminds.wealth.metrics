@@ -369,14 +369,12 @@
   transition: all 0.2s ease;
 }
 
-/* Focus states for accessibility */
+/* Focus states for accessibility - removed blue outlines */
 .view-toggle button:focus,
 .period-selector button:focus,
 .checkbox-label:focus,
 .projection-years input:focus {
-  outline: 2px solid #667eea;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  outline: none;
 }
 
 /* Hover effects */
