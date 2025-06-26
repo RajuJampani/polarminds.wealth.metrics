@@ -1,34 +1,44 @@
 .interactive-chart {
+  width: 100%;
+  max-width: none;
+  margin: 0;
   background: #ffffff;
-  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.temp-stats-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  background: transparent;
   padding: 0;
+  border-radius: 0;
   box-shadow: none;
   border: none;
-  margin: 0;
+  min-width: 280px;
+  backdrop-filter: none;
 }
 
 .chart-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 20px;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: transparent;
-  border-radius: 0;
-  border: none;
-  border-bottom: 1px solid #e8eaed;
+  gap: 15px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
 }
 
 .view-toggle {
   display: flex;
-  background: #f1f3f4;
-  border-radius: 6px;
+  background: #ffffff;
+  border-radius: 4px;
   padding: 2px;
   gap: 2px;
   justify-content: center;
-  border: 1px solid #dadce0;
 }
 
 @media (min-width: 768px) {
@@ -38,37 +48,35 @@
 }
 
 .view-toggle button {
-  padding: 10px 18px;
+  padding: 10px 16px;
   border: none;
-  border-radius: 4px;
-  font-size: 15px;
+  border-radius: 3px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   background: transparent;
-  color: #5f6368;
-  font-family: 'Google Sans', 'Roboto', sans-serif;
+  color: #666;
+  font-family: inherit;
 }
 
 .view-toggle button.active {
   background: #1a73e8;
   color: #ffffff;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
 
 .view-toggle button:hover:not(.active) {
-  color: #202124;
-  background: #e8eaed;
+  color: #333;
+  background: #f0f0f0;
 }
 
 .period-selector {
   display: flex;
   background: #ffffff;
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 2px;
-  gap: 1px;
+  gap: 2px;
   justify-content: center;
-  border: 1px solid #dadce0;
 }
 
 @media (min-width: 768px) {
@@ -78,28 +86,27 @@
 }
 
 .period-selector button {
-  padding: 8px 14px;
+  padding: 8px 12px;
   border: none;
   border-radius: 3px;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   background: transparent;
-  color: #5f6368;
+  color: #666;
   min-width: 40px;
-  font-family: 'Google Sans', 'Roboto', sans-serif;
+  font-family: inherit;
 }
 
 .period-selector button.active {
   background: #1a73e8;
   color: #ffffff;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
 }
 
 .period-selector button:hover:not(.active) {
-  color: #202124;
-  background: #f1f3f4;
+  color: #333;
+  background: #f0f0f0;
 }
 
 .zoom-controls {
@@ -238,53 +245,53 @@
 
 .chart-container {
   position: relative;
-  height: 400px;
   width: 100%;
+  height: 500px;
   background: #ffffff;
-  border-radius: 0;
-  padding: 1rem;
   margin: 0;
 }
 
-.temp-stats-overlay {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #e8eaed;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(4px);
-  z-index: 10;
-  min-width: 200px;
-  font-family: 'Google Sans', 'Roboto', sans-serif;
-}
+/* Remove old overlay styles as we're using header layout now */
 
-.temp-stats-value {
-  font-size: 24px;
-  font-weight: 500;
-  color: #202124;
-  margin-bottom: 4px;
-  line-height: 1.2;
-}
-
-.temp-stats-change {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 500;
+.temp-stats-header .temp-stats-value {
+  font-size: 32px;
   margin-bottom: 8px;
-  flex-wrap: wrap;
+  letter-spacing: -0.8px;
+  line-height: 1.1;
+  font-family: inherit;
+  text-align: right;
+  font-weight: 800;
+  background: linear-gradient(135deg, #1a1a1a 0%, #374151 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.temp-stats-change.positive {
-  color: #137333;
+.temp-stats-header .temp-stats-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  font-family: inherit;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
 }
 
-.temp-stats-change.negative {
-  color: #d93025;
+.temp-stats-header .temp-stats-change.positive {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.temp-stats-header .temp-stats-change.negative {
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+  color: #991b1b;
+  border: 1px solid #fca5a5;
 }
 
 .change-arrow {
@@ -294,46 +301,78 @@
 
 .change-percent {
   font-weight: 600;
+  font-size: 16px;
 }
 
 .change-amount {
-  font-size: 13px;
-  opacity: 0.8;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .change-period {
-  font-size: 12px;
-  background: #f1f3f4;
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: #5f6368;
-  font-weight: 500;
+  font-size: 16px;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  font-weight: 600;
+  border: none;
 }
 
-.temp-stats-period {
+.temp-stats-header .temp-stats-period {
   font-size: 12px;
-  color: #5f6368;
-  border-top: 1px solid #e8eaed;
-  padding-top: 8px;
+  color: #6b7280;
   margin-top: 4px;
-  text-align: center;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: right;
 }
 
 @media (max-width: 768px) {
-  .temp-stats-overlay {
-    top: 10px;
-    right: 10px;
-    padding: 12px;
-    min-width: 160px;
+  .temp-stats-header {
+    align-items: center;
+    min-width: auto;
+    width: 100%;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
   }
-  
-  .temp-stats-value {
-    font-size: 20px;
+
+  .temp-stats-header .temp-stats-value {
+    font-size: 28px;
+    text-align: center;
   }
-  
-  .temp-stats-change {
+
+  .temp-stats-header .temp-stats-change {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .temp-stats-header .temp-stats-period {
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .change-percent,
+  .change-amount,
+  .change-period {
+    font-size: 11px;
+  }
+
+  .chart-controls {
+    padding: 16px 20px;
+    gap: 12px;
+  }
+
+  .view-toggle button {
+    padding: 10px 16px;
     font-size: 13px;
-    gap: 4px;
+  }
+
+  .period-selector button {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-width: 36px;
   }
 }
 

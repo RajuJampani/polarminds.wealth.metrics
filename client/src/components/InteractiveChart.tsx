@@ -11,6 +11,7 @@ import {
   ChartOptions,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { CalculationResult, MarketDataResponse as MarketData } from '../shared-types';
 import './InteractiveChart.css';
 
 ChartJS.register(
@@ -23,70 +24,22 @@ ChartJS.register(
   Legend
 );
 
-interface CalculationResult {
-  summary: {
-    finalAmount: number;
-    totalContributions: number;
-    totalGains: number;
-    totalROI: number;
-    totalDeposits?: number;
-    totalWithdrawals?: number;
-    netInvestment?: number;
-    netGains?: number;
-    netROI?: number;
-    averageAnnualReturn: string | number;
-    investmentPeriod: {
-      startDate: string;
-      endDate: string;
-      totalMonths: number;
-    };
-  };
-  monthlyData: Array<{
-    month: number;
-    year?: number;
-    monthOfYear?: number;
-    date?: string;
-    amount: number;
-    contributions: number;
-    netInvestment?: number;
-    gains: number;
-  }>;
-  yearlyData: Array<{
-    year: number;
-    amount: number;
-    contributions: number;
-    netInvestment?: number;
-    gains: number;
-    roi: number;
-  }>;
-}
-
-interface MarketData {
-  index: string;
-  indexName: string;
-  averageReturn: number;
-  historicalData: Array<{
-    year: number;
-    return: number;
-    returnPercentage: string;
-    index: string;
-    indexName: string;
-  }>;
-  lastUpdated: string;
-}
+// Types are now imported from shared-types.ts
 
 interface InteractiveChartProps {
   data: CalculationResult;
   marketData?: Record<string, MarketData>;
   selectedIndices?: string[];
   primaryIndex?: string;
+  onStatsUpdate?: (stats: any) => void;
 }
 
 const InteractiveChart: React.FC<InteractiveChartProps> = ({ 
   data, 
   marketData = {}, 
   selectedIndices = ['sp500'], 
-  primaryIndex = 'sp500'
+  primaryIndex = 'sp500',
+  onStatsUpdate
 }) => {
 
   const [viewMode, setViewMode] = useState<'monthly' | 'yearly'>('yearly');
@@ -121,7 +74,20 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
 
   // Memoize filterDataByPeriod to prevent unnecessary re-creation
   const filterDataByPeriod = useCallback((baseData: any[]) => {
-    if (selectedPeriod === 'MAX' || baseData.length === 0) {
+    if (baseData.length === 0) {
+      return baseData;
+    }
+    
+    // For MAX period, include 1 year prior to investment start if market data is available
+    if (selectedPeriod === 'MAX') {
+      // Get the investment start date from the first data point
+      const investmentStartDate = baseData[0];
+      if (!investmentStartDate) return baseData;
+      
+      // Calculate 1 year prior to investment start
+      const startYear = investmentStartDate.year || new Date().getFullYear();
+      const oneYearPrior = startYear - 1;
+      
       return baseData;
     }
 
@@ -255,7 +221,8 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
     if (!showProjection || !data.yearlyData.length) return { labels: [], amounts: [], contributions: [] };
 
     const lastYear = data.yearlyData[data.yearlyData.length - 1];
-     const selectedMarketReturn = marketData[primaryIndex]?.averageReturn || 0.10;
+     // Use consistent market data - fallback to S&P 500's return if primary index not found
+     const selectedMarketReturn = marketData[primaryIndex]?.averageReturn || marketData['sp500']?.averageReturn || 0.10;
      const monthlyReturn = selectedMarketReturn / 12;
      const monthlyContribution = ((lastYear.netInvestment || lastYear.contributions) - (data.summary.netInvestment || data.summary.totalContributions)) / (lastYear.year * 12) || 0;
 
@@ -413,11 +380,14 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
            ).length;
            return `${item.year} (${monthsInPartialYear}m)`;
          }
+         
          return item.year.toString();
        } else {
          // Use the actual year and month from the data
          const date = new Date(item.year || new Date().getFullYear(), (item.monthOfYear || item.month) - 1, 1);
-         return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+         const label = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+         
+         return label;
        }
      });
 
@@ -501,6 +471,9 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
     if (projectionData.contributions.length > 0) {
       datasets.push(projectedContributionsDataset);
     }
+    
+    // Add market index data if available and MAX period is selected
+
 
     return {
       labels: allLabels,
@@ -628,13 +601,14 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
           },
         },
       },
+
     },
     interaction: {
       mode: 'nearest',
       axis: 'x',
       intersect: false,
     },
-  }), [viewMode, formatCurrency]);
+  }), [viewMode, formatCurrency, selectedPeriod]);
 
   // Memoize view toggle handler
   const handleViewModeChange = useCallback((mode: 'yearly' | 'monthly') => {
@@ -666,7 +640,30 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
 
   // Calculate temporary stats for the filtered time window
   const calculateTemporaryStats = useCallback(() => {
-    const currentBaseData = viewMode === 'yearly' ? data.yearlyData : data.monthlyData;
+    let currentBaseData = viewMode === 'yearly' ? data.yearlyData : data.monthlyData;
+    
+    // For yearly view with MAX filter, add partial year data if available (same logic as chart)
+    if (viewMode === 'yearly' && selectedPeriod === 'MAX' && data.monthlyData.length > 0) {
+      const lastYearlyData = data.yearlyData[data.yearlyData.length - 1];
+      const lastMonthlyData = data.monthlyData[data.monthlyData.length - 1];
+      
+      // Check if we have monthly data beyond the last complete year
+      if (lastMonthlyData && lastYearlyData && 
+          (lastMonthlyData.year || new Date().getFullYear()) > lastYearlyData.year) {
+        // Add a partial year data point with proper yearly data structure
+        const partialYearData = {
+          year: lastMonthlyData.year || new Date().getFullYear(),
+          amount: lastMonthlyData.amount,
+          contributions: lastMonthlyData.contributions,
+          netInvestment: lastMonthlyData.netInvestment,
+          gains: lastMonthlyData.gains,
+          roi: lastMonthlyData.gains / (lastMonthlyData.netInvestment || lastMonthlyData.contributions || 1)
+        };
+        currentBaseData = [...(currentBaseData as typeof data.yearlyData), partialYearData];
+      }
+    }
+    
+    // Use the same filtering logic as the chart to ensure consistency
     const filteredData = filterDataByPeriod(currentBaseData);
     
     if (filteredData.length === 0) {
@@ -681,26 +678,52 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
     const firstPoint = filteredData[0];
     const lastPoint = filteredData[filteredData.length - 1];
     
+    // Match the Current Position calculation method exactly
     const currentValue = lastPoint.amount;
     const startValue = firstPoint.amount;
-    const change = currentValue - startValue;
-    const changePercent = startValue > 0 ? (change / startValue) * 100 : 0;
     
+    // Calculate net investment for both points (assuming no withdrawals for simplicity)
+    const currentNetInvestment = lastPoint.contributions || lastPoint.amount || 0;
+    const startNetInvestment = firstPoint.contributions || firstPoint.amount || 0;
+    
+    // Calculate net gains using the same method as Current Position: amount - netInvestment
+    const currentNetGains = currentValue - currentNetInvestment;
+    const startNetGains = startValue - startNetInvestment;
+    
+    // Calculate the change in net gains during the period
+    const netGainsChange = currentNetGains - startNetGains;
+    
+    // Calculate the change in net investment during the period
+    const netInvestmentChange = currentNetInvestment - startNetInvestment;
+    
+    // For percentage calculation, use the starting net investment as the base
+    const baseInvestment = startNetInvestment > 0 ? startNetInvestment : 1; // Avoid division by zero
+    
+    // Calculate percentage based on net gains change relative to base investment
+    const changePercent = (netGainsChange / baseInvestment) * 100;
+
     return {
       currentValue,
-      change,
+      change: netGainsChange,
       changePercent,
       period: selectedPeriod,
       timeRange: filteredData.length > 1 ? 
         `${viewMode === 'yearly' ? firstPoint.year : 
-          new Date(firstPoint.year || new Date().getFullYear(), (firstPoint.monthOfYear || firstPoint.month) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - ${viewMode === 'yearly' ? lastPoint.year : 
-          new Date(lastPoint.year || new Date().getFullYear(), (lastPoint.monthOfYear || lastPoint.month) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}` : 
-        (viewMode === 'yearly' ? lastPoint.year.toString() : 
-          new Date(lastPoint.year || new Date().getFullYear(), (lastPoint.monthOfYear || lastPoint.month) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }))
+          new Date(firstPoint.year || new Date().getFullYear(), ((firstPoint as any).monthOfYear || (firstPoint as any).month) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - ${viewMode === 'yearly' ? lastPoint.year : 
+          new Date(lastPoint.year || new Date().getFullYear(), ((lastPoint as any).monthOfYear || (lastPoint as any).month) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}` : 
+        (viewMode === 'yearly' ? firstPoint.year?.toString() : 
+          new Date(firstPoint.year || new Date().getFullYear(), ((firstPoint as any).monthOfYear || (firstPoint as any).month) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }))
     };
-  }, [viewMode, data.yearlyData, data.monthlyData, filterDataByPeriod, selectedPeriod]);
+  }, [viewMode, data.yearlyData, data.monthlyData, selectedPeriod, filterDataByPeriod]);
   
-  const tempStats = calculateTemporaryStats();
+  const tempStats = useMemo(() => calculateTemporaryStats(), [calculateTemporaryStats]);
+
+  // Update parent component with stats
+  useEffect(() => {
+    if (onStatsUpdate) {
+      onStatsUpdate(tempStats);
+    }
+  }, [tempStats, onStatsUpdate]);
 
   return (
     <div className="interactive-chart">
@@ -746,22 +769,6 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
       </div>
       
       <div className="chart-container">
-        <div className="temp-stats-overlay">
-          <div className="temp-stats-value">
-            {formatCurrency(tempStats.currentValue)}
-          </div>
-          <div className={`temp-stats-change ${tempStats.change >= 0 ? 'positive' : 'negative'}`}>
-            <span className="change-arrow">{tempStats.change >= 0 ? '↑' : '↓'}</span>
-            <span className="change-percent">{Math.abs(tempStats.changePercent).toFixed(2)}%</span>
-            <span className="change-amount">{tempStats.change >= 0 ? '+' : ''}{formatCurrency(tempStats.change)}</span>
-            <span className="change-period">{tempStats.period}</span>
-          </div>
-          {tempStats.timeRange && (
-            <div className="temp-stats-period">
-              {tempStats.timeRange}
-            </div>
-          )}
-        </div>
         <Line ref={chartRef} data={chartData} options={chartOptions} />
       </div>
       

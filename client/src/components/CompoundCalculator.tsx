@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Transaction as SharedTransaction } from '../shared-types';
 import './CompoundCalculator.css';
 
 interface SP500Data {
@@ -11,11 +12,9 @@ interface SP500Data {
   lastUpdated: string;
 }
 
-interface Transaction {
+// Extended Transaction interface with id and description for client-side management
+interface Transaction extends SharedTransaction {
   id: string;
-  date: string;
-  amount: number;
-  type: 'deposit' | 'withdrawal';
   description?: string;
 }
 

@@ -2,6 +2,12 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import CompoundCalculatorMUI from './components/CompoundCalculatorMUI';
 import InteractiveChart from './components/InteractiveChart';
+import {
+  Transaction as SharedTransaction,
+  CalculationResult,
+  MarketDataResponse as MarketData,
+  MarketIndexInfo as MarketIndex
+} from './shared-types';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { useRef } from 'react';
 import { 
@@ -128,66 +134,12 @@ const theme = createTheme({
   },
 });
 
-interface Transaction {
+// Extended Transaction interface with id for client-side management
+interface Transaction extends SharedTransaction {
   id: string;
-  date: string;
-  amount: number;
-  type: 'deposit' | 'withdrawal';
 }
 
-interface CalculationResult {
-  summary: {
-    finalAmount: number;
-    totalContributions: number;
-    totalGains: number;
-    totalROI: number;
-    totalDeposits: number;
-    totalWithdrawals: number;
-    netInvestment: number;
-    netGains: number;
-    netROI: number;
-    averageAnnualReturn: string | number;
-    investmentPeriod: {
-      startDate: string;
-      endDate: string;
-      totalMonths: number;
-    };
-  };
-  monthlyData: Array<{
-    month: number;
-    amount: number;
-    contributions: number;
-    gains: number;
-  }>;
-  yearlyData: Array<{
-    year: number;
-    amount: number;
-    contributions: number;
-    gains: number;
-    roi: number;
-  }>;
-}
-
-interface MarketData {
-  index: string;
-  indexName: string;
-  averageReturn: number;
-  historicalData: Array<{
-    year: number;
-    return: number;
-    returnPercentage: string;
-    index: string;
-    indexName: string;
-  }>;
-  lastUpdated: string;
-}
-
-interface MarketIndex {
-  id: string;
-  name: string;
-  averageReturn: number;
-}
-
+// Legacy interface for backward compatibility
 interface SP500Data {
   averageReturn: number;
   historicalData: Array<{
@@ -235,6 +187,19 @@ function App() {
   
   // Cache expiry time (5 minutes)
   const CACHE_EXPIRY_MS = 5 * 60 * 1000;
+
+  // Temporary stats for display next to main header
+  const [tempStats, setTempStats] = useState<any>(null);
+
+  // Format currency function
+  const formatCurrency = useCallback((value: number): string => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  }, []);
 
   // Save transactions to localStorage whenever they change
   useEffect(() => {
@@ -305,12 +270,14 @@ function App() {
       setAvailableIndices(response.data);
     } catch (err) {
       console.error('Error fetching market indices:', err);
-      // Set fallback data
+      // Set fallback data (must match server MARKET_INDICES exactly)
       setAvailableIndices([
         { id: 'sp500', name: 'S&P 500', averageReturn: 0.10 },
-        { id: 'dowjones', name: 'Dow Jones', averageReturn: 0.095 },
         { id: 'nasdaq', name: 'NASDAQ', averageReturn: 0.115 },
-        { id: 'russell2000', name: 'Russell 2000', averageReturn: 0.092 }
+        { id: 'dow', name: 'Dow Jones', averageReturn: 0.095 },
+        { id: 'russell2000', name: 'Russell 2000', averageReturn: 0.092 },
+        { id: 'ftse100', name: 'FTSE 100', averageReturn: 0.075 },
+        { id: 'nikkei225', name: 'Nikkei 225', averageReturn: 0.085 }
       ]);
     }
   };
@@ -403,6 +370,27 @@ function App() {
     
     return () => clearInterval(interval);
   }, [cleanupExpiredCache, CACHE_EXPIRY_MS]);
+  
+  // Periodic market data refresh for real-time updates
+  useEffect(() => {
+    const MARKET_DATA_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+    
+    const interval = setInterval(() => {
+      // Refresh market indices data
+      fetchAvailableIndices();
+      
+      // Refresh market data for current primary index if we have calculation data
+      if (calculationResult && primaryIndex) {
+        const startDate = calculationResult.yearlyData?.[0]?.year?.toString();
+        const endDate = new Date().getFullYear().toString();
+        if (startDate) {
+          fetchMarketData(primaryIndex, startDate, endDate);
+        }
+      }
+    }, MARKET_DATA_REFRESH_INTERVAL);
+    
+    return () => clearInterval(interval);
+  }, [fetchMarketData, calculationResult, primaryIndex]);
 
   // Optimized fetch market data for selected indices with smart caching
   useEffect(() => {
@@ -1570,19 +1558,54 @@ function App() {
               </Box>
             ) : (
               <Box>
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="h3" sx={{ color: 'text.primary', mb: 1 }}>
-                    Investment Growth
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    Portfolio value over time with {availableIndices.find(i => i.id === primaryIndex)?.name || 'S&P 500'} returns
-                  </Typography>
+                <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 3 }}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h3" sx={{ color: 'text.primary', mb: 1 }}>
+                      Investment Growth
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      Portfolio value over time with {availableIndices.find(i => i.id === primaryIndex)?.name || 'S&P 500'} returns
+                    </Typography>
+                  </Box>
+                  {tempStats && (
+                    <Box sx={{ textAlign: 'right', minWidth: '280px' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, mb: 1 }}>
+                        <Typography variant="h4" sx={{ fontWeight: 400, background: 'linear-gradient(135deg, #1a1a1a 0%, #374151 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                          {formatCurrency(tempStats.currentValue)}
+                        </Typography>
+                        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, fontSize: '13px', fontWeight: 600, letterSpacing: '.03em' }}>
+                          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1.5, py: 0.5, borderRadius: '8px', ...(tempStats.change >= 0 ? { background: 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)', color: '#166534', border: '1px solid #86efac' } : { background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#991b1b', border: '1px solid #fca5a5' }) }}>
+                            <span>{tempStats.change >= 0 ? '↑' : '↓'}</span>
+                            <span>{Math.abs(tempStats.changePercent).toFixed(2)}%</span>
+                          </Box>
+                          <span style={{ ...(tempStats.change >= 0 ? { color: '#166534' } : { color: '#991b1b' }) }}>{tempStats.change >= 0 ? '+' : ''}{formatCurrency(tempStats.change)}</span>
+                          <span style={{ ...(tempStats.change >= 0 ? { color: '#166534' } : { color: '#991b1b' }) }}>{tempStats.period}</span>
+                        </Box>
+                      </Box>
+                      {tempStats.timeRange && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
+                          <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '12px', fontWeight: 500 }}>
+                            {tempStats.timeRange}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: '6px', backgroundColor: '#f3f4f6', border: '1px solid #e5e7eb' }}>
+                            <Typography variant="body2" sx={{ color: '#374151', fontSize: '11px', fontWeight: 600 }}>
+                              {availableIndices.find(i => i.id === primaryIndex)?.name || 'S&P 500'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#059669', fontSize: '11px', fontWeight: 700 }}>
+                              {((availableIndices.find(i => i.id === primaryIndex)?.averageReturn || 0.10) * 100).toFixed(1)}%
+                            </Typography>
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+                  )}
                 </Box>
                 <InteractiveChart 
               data={chartData}
               marketData={marketDataCache}
               selectedIndices={selectedIndices}
               primaryIndex={primaryIndex}
+              onStatsUpdate={setTempStats}
             />
               </Box>
             )}
