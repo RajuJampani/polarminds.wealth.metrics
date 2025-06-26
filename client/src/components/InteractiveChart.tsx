@@ -664,6 +664,44 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
     setShowProjection(e.target.checked);
   }, []);
 
+  // Calculate temporary stats for the filtered time window
+  const calculateTemporaryStats = useCallback(() => {
+    const currentBaseData = viewMode === 'yearly' ? data.yearlyData : data.monthlyData;
+    const filteredData = filterDataByPeriod(currentBaseData);
+    
+    if (filteredData.length === 0) {
+      return {
+        currentValue: 0,
+        change: 0,
+        changePercent: 0,
+        period: selectedPeriod
+      };
+    }
+    
+    const firstPoint = filteredData[0];
+    const lastPoint = filteredData[filteredData.length - 1];
+    
+    const currentValue = lastPoint.amount;
+    const startValue = firstPoint.amount;
+    const change = currentValue - startValue;
+    const changePercent = startValue > 0 ? (change / startValue) * 100 : 0;
+    
+    return {
+      currentValue,
+      change,
+      changePercent,
+      period: selectedPeriod,
+      timeRange: filteredData.length > 1 ? 
+        `${viewMode === 'yearly' ? firstPoint.year : 
+          new Date(firstPoint.year || new Date().getFullYear(), (firstPoint.monthOfYear || firstPoint.month) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - ${viewMode === 'yearly' ? lastPoint.year : 
+          new Date(lastPoint.year || new Date().getFullYear(), (lastPoint.monthOfYear || lastPoint.month) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}` : 
+        (viewMode === 'yearly' ? lastPoint.year.toString() : 
+          new Date(lastPoint.year || new Date().getFullYear(), (lastPoint.monthOfYear || lastPoint.month) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }))
+    };
+  }, [viewMode, data.yearlyData, data.monthlyData, filterDataByPeriod, selectedPeriod]);
+  
+  const tempStats = calculateTemporaryStats();
+
   return (
     <div className="interactive-chart">
 
@@ -708,6 +746,22 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
       </div>
       
       <div className="chart-container">
+        <div className="temp-stats-overlay">
+          <div className="temp-stats-value">
+            {formatCurrency(tempStats.currentValue)}
+          </div>
+          <div className={`temp-stats-change ${tempStats.change >= 0 ? 'positive' : 'negative'}`}>
+            <span className="change-arrow">{tempStats.change >= 0 ? '↑' : '↓'}</span>
+            <span className="change-percent">{Math.abs(tempStats.changePercent).toFixed(2)}%</span>
+            <span className="change-amount">{tempStats.change >= 0 ? '+' : ''}{formatCurrency(tempStats.change)}</span>
+            <span className="change-period">{tempStats.period}</span>
+          </div>
+          {tempStats.timeRange && (
+            <div className="temp-stats-period">
+              {tempStats.timeRange}
+            </div>
+          )}
+        </div>
         <Line ref={chartRef} data={chartData} options={chartOptions} />
       </div>
       
