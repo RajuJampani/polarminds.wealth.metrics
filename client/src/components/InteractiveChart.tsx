@@ -375,9 +375,9 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
          
          if (isPartialYear) {
            // Find the number of months for this partial year
-           const monthsInPartialYear = data.monthlyData.filter(m => 
-             (m.year || new Date().getFullYear()) === item.year
-           ).length;
+           const monthsInPartialYear = data.monthlyData.filter((m: any) => 
+              (m.year || new Date().getFullYear()) === item.year
+            ).length;
            return `${item.year} (${monthsInPartialYear}m)`;
          }
          

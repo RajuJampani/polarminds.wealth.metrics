@@ -137,6 +137,7 @@ const theme = createTheme({
 // Extended Transaction interface with id for client-side management
 interface Transaction extends SharedTransaction {
   id: string;
+  description?: string;
 }
 
 // Legacy interface for backward compatibility
@@ -590,12 +591,7 @@ function App() {
 
   const calculateCompound = useCallback(async (formData: {
     initialAmount: number;
-    transactions: Array<{
-      id: string;
-      date: string;
-      amount: number;
-      type: 'deposit' | 'withdrawal';
-    }>;
+    transactions: Transaction[];
     startDate: string;
     endDate: string;
   }) => {
