@@ -42,7 +42,7 @@ interface CompoundCalculatorProps {
     transactions: Transaction[];
     startDate: string;
     endDate: string;
-  }) => void;
+  }) => Promise<void>;
   onTransactionsChange?: (transactions: Transaction[]) => void;
   loading?: boolean;
   sp500Data?: SP500Data;
