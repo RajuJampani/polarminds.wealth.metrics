@@ -11,6 +11,7 @@ import {
   ChartOptions,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { useTheme, alpha } from '@mui/material/styles';
 import { CalculationResult, MarketDataResponse as MarketData } from '../shared-types';
 import './InteractiveChart.css';
 
@@ -41,6 +42,7 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
   primaryIndex = 'sp500',
   onStatsUpdate
 }) => {
+  const theme = useTheme();
 
   const [viewMode, setViewMode] = useState<'monthly' | 'yearly'>('yearly');
   const [showProjection, setShowProjection] = useState(false);
@@ -48,6 +50,7 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
   const [selectedPeriod, setSelectedPeriod] = useState<string>('MAX');
   const [autoProjectionEnabled, setAutoProjectionEnabled] = useState(false);
   const [showNetInvestment, setShowNetInvestment] = useState(false); // Default to false
+  const [showNoWithdrawals, setShowNoWithdrawals] = useState(false); // Default to false
   const chartRef = useRef<ChartJS<'line'> | null>(null);
 
   // Memoize formatCurrency to prevent unnecessary re-creation
@@ -330,6 +333,46 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
     }
   }, [showProjection, autoProjectionEnabled, getVisibleDataPoints]);
 
+  // Calculate portfolio value without withdrawals from given base data
+  const calculateNoWithdrawalsDataFromBase = useCallback((baseData: any[]) => {
+    if (!baseData.length) return [];
+    
+    // Get the selected market return for growth calculation
+    const selectedMarketReturn = marketData[primaryIndex]?.averageReturn || marketData['sp500']?.averageReturn || 0.10;
+    const monthlyReturn = selectedMarketReturn / 12;
+    
+    // Calculate what the portfolio would be worth without withdrawals
+    return baseData.map((point, index) => {
+      // For the first point, no withdrawals have occurred yet
+      if (index === 0) {
+        return {
+          ...point,
+          amount: point.amount
+        };
+      }
+      
+      // Calculate cumulative withdrawals up to this point
+      // This is an approximation - we assume withdrawals were spread evenly
+      const totalWithdrawals = data.summary.totalWithdrawals || 0;
+      const progressRatio = index / (baseData.length - 1);
+      const withdrawalsToThisPoint = totalWithdrawals * progressRatio;
+      
+      // Calculate how much those withdrawals would have grown if left invested
+      // Assume withdrawals happened at the midpoint of the period
+      const periodsRemaining = (baseData.length - 1 - index) / 2;
+      const withdrawalGrowthFactor = viewMode === 'yearly' 
+        ? Math.pow(1 + selectedMarketReturn, periodsRemaining)
+        : Math.pow(1 + monthlyReturn, periodsRemaining);
+      
+      const withdrawalGrowth = withdrawalsToThisPoint * withdrawalGrowthFactor;
+      
+      return {
+        ...point,
+        amount: point.amount + withdrawalGrowth
+      };
+    });
+  }, [data, marketData, primaryIndex, viewMode]);
+
   // Memoize chart data to prevent unnecessary re-creation
   const chartData = useMemo(() => {
     let currentBaseData = viewMode === 'yearly' ? data.yearlyData : data.monthlyData;
@@ -397,17 +440,22 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
      const historicalContributions = filteredData.map(item => {
        return item.netInvestment || item.contributions;
      });
+     
+     // Calculate no-withdrawals portfolio values using the same enhanced data
+     const noWithdrawalsData = calculateNoWithdrawalsDataFromBase(currentBaseData);
+     const filteredNoWithdrawalsData = filterDataByPeriod(noWithdrawalsData);
+     const historicalNoWithdrawalsValues = filteredNoWithdrawalsData.map((item) => item.amount);
 
     // Create separate datasets for historical and projected data
     const historicalDataset = {
        label: 'Portfolio Value',
        data: historicalPortfolioValues,
-       borderColor: '#1a73e8',
-       backgroundColor: 'rgba(26, 115, 232, 0.1)',
+       borderColor: theme.palette.primary.main,
+       backgroundColor: alpha(theme.palette.primary.main, 0.1),
        tension: 0.4,
        borderWidth: 3,
        pointRadius: 4,
-       pointBackgroundColor: '#1a73e8',
+       pointBackgroundColor: theme.palette.primary.main,
        pointBorderColor: 'white',
        pointBorderWidth: 2,
        borderDash: [] as number[], // Solid line for historical data
@@ -417,12 +465,12 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
      const projectedDataset = {
        label: 'Projected Investment Value',
        data: [...Array(Math.max(0, historicalPortfolioValues.length - 1)).fill(null), historicalPortfolioValues[historicalPortfolioValues.length - 1], ...projectionData.amounts],
-       borderColor: '#ff9800',
-       backgroundColor: 'rgba(255, 152, 0, 0.1)',
+       borderColor: theme.palette.primary.light,
+       backgroundColor: alpha(theme.palette.primary.light, 0.1),
        tension: 0.4,
        borderWidth: 3,
        pointRadius: 3,
-       pointBackgroundColor: '#ff9800',
+       pointBackgroundColor: theme.palette.primary.light,
        pointBorderColor: 'white',
        pointBorderWidth: 2,
        borderDash: [8, 4] as number[], // Dotted line for projections
@@ -432,12 +480,12 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
      const historicalContributionsDataset = {
        label: 'Net Investment',
        data: historicalContributions,
-       borderColor: '#9c27b0',
-       backgroundColor: 'rgba(156, 39, 176, 0.1)',
+       borderColor: theme.palette.error.main,
+       backgroundColor: alpha(theme.palette.error.main, 0.1),
        tension: 0.4,
        borderWidth: 2,
        pointRadius: 2,
-       pointBackgroundColor: '#9c27b0',
+       pointBackgroundColor: theme.palette.error.main,
        pointBorderColor: 'white',
        pointBorderWidth: 1,
        borderDash: [] as number[], // Solid line for historical data
@@ -448,12 +496,55 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
      const projectedContributionsDataset = {
        label: 'Projected Net Investment',
        data: [...Array(Math.max(0, historicalContributions.length - 1)).fill(null), historicalContributions[historicalContributions.length - 1], ...projectionData.contributions],
-       borderColor: '#9c27b0',
-       backgroundColor: 'rgba(156, 39, 176, 0.1)',
+       borderColor: theme.palette.error.main,
+       backgroundColor: alpha(theme.palette.error.main, 0.1),
        tension: 0.4,
        borderWidth: 2,
        pointRadius: 2,
-       pointBackgroundColor: 'rgba(156, 39, 176, 0.6)',
+       pointBackgroundColor: alpha(theme.palette.error.main, 0.6),
+       pointBorderColor: 'white',
+       pointBorderWidth: 1,
+       borderDash: [5, 5] as number[], // Dotted line for projections
+       fill: false,
+     };
+
+     // No-withdrawals portfolio dataset
+     const historicalNoWithdrawalsDataset = {
+       label: 'Portfolio Without Withdrawals',
+       data: historicalNoWithdrawalsValues,
+       borderColor: theme.palette.warning.dark,
+       backgroundColor: alpha(theme.palette.warning.dark, 0.1),
+       tension: 0.4,
+       borderWidth: 2,
+       pointRadius: 2,
+       pointBackgroundColor: theme.palette.warning.dark,
+       pointBorderColor: 'white',
+       pointBorderWidth: 1,
+       borderDash: [] as number[], // Solid line for historical data
+       fill: false,
+     };
+
+     // Calculate projected no-withdrawals data
+     const projectedNoWithdrawalsData = projectionData ? projectionData.amounts.map((amount, index) => {
+       const totalWithdrawals = data.summary.totalWithdrawals || 0;
+       const selectedMarketReturn = marketData[primaryIndex]?.averageReturn || marketData['sp500']?.averageReturn || 0.10;
+       const periodsFromNow = index + 1;
+       const withdrawalGrowthFactor = viewMode === 'yearly' 
+         ? Math.pow(1 + selectedMarketReturn, periodsFromNow)
+         : Math.pow(1 + selectedMarketReturn / 12, periodsFromNow);
+       
+       return amount + (totalWithdrawals * withdrawalGrowthFactor);
+     }) : [];
+
+     const projectedNoWithdrawalsDataset = {
+       label: 'Projected Portfolio Without Withdrawals',
+       data: [...Array(Math.max(0, historicalNoWithdrawalsValues.length - 1)).fill(null), historicalNoWithdrawalsValues[historicalNoWithdrawalsValues.length - 1], ...projectedNoWithdrawalsData],
+       borderColor: theme.palette.warning.dark,
+       backgroundColor: alpha(theme.palette.warning.dark, 0.1),
+       tension: 0.4,
+       borderWidth: 2,
+       pointRadius: 2,
+       pointBackgroundColor: alpha(theme.palette.warning.dark, 0.6),
        pointBorderColor: 'white',
        pointBorderWidth: 1,
        borderDash: [5, 5] as number[], // Dotted line for projections
@@ -477,6 +568,16 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
       }
     }
     
+    // Add No-Withdrawals datasets conditionally
+     if (showNoWithdrawals) {
+       datasets.push(historicalNoWithdrawalsDataset);
+       
+       // Only add projected no-withdrawals if we have projection data and showProjection is true
+       if (projectionData && showProjection) {
+         datasets.push(projectedNoWithdrawalsDataset);
+       }
+     }
+    
     // Add market index data if available and MAX period is selected
 
 
@@ -484,7 +585,7 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
       labels: allLabels,
       datasets: datasets,
     };
-  }, [viewMode, data, selectedPeriod, showNetInvestment, showProjection, filterDataByPeriod, generateProjectionData]);
+  }, [viewMode, data, selectedPeriod, showNetInvestment, showNoWithdrawals, showProjection, filterDataByPeriod, generateProjectionData, calculateNoWithdrawalsDataFromBase, marketData, primaryIndex, theme]);
 
   // Memoize chart options to prevent unnecessary re-creation
   const chartOptions = useMemo((): ChartOptions<'line'> => ({
@@ -502,7 +603,7 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
               weight: 'normal',
               family: 'Google Sans, Roboto, sans-serif',
             },
-            color: '#5f6368',
+            color: theme.palette.text.secondary,
           },
         },
       title: {
@@ -513,7 +614,7 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
             weight: 'normal',
             family: 'Google Sans, Roboto, sans-serif',
           },
-          color: '#202124',
+          color: theme.palette.text.primary,
           padding: {
             bottom: 30,
           },
@@ -521,10 +622,10 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
       tooltip: {
         mode: 'index',
         intersect: false,
-        backgroundColor: 'rgba(32, 33, 36, 0.95)',
-        titleColor: '#ffffff',
-        bodyColor: '#ffffff',
-        borderColor: '#5f6368',
+        backgroundColor: alpha(theme.palette.text.primary, 0.95),
+        titleColor: theme.palette.background.paper,
+        bodyColor: theme.palette.background.paper,
+        borderColor: theme.palette.text.secondary,
         borderWidth: 1,
         cornerRadius: 8,
         padding: 12,
@@ -551,11 +652,11 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
       x: {
         display: true,
         grid: {
-          color: 'rgba(218, 220, 224, 0.5)',
+          color: alpha(theme.palette.grey[300], 0.5),
           lineWidth: 1,
         },
         ticks: {
-          color: '#5f6368',
+          color: theme.palette.text.secondary,
           font: {
             size: 12,
             weight: 'normal',
@@ -565,7 +666,7 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
         title: {
           display: true,
           text: 'Time Period',
-          color: '#202124',
+          color: theme.palette.text.primary,
           font: {
             size: 14,
             weight: 'normal',
@@ -579,11 +680,11 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
       y: {
         display: true,
         grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
+          color: alpha(theme.palette.text.primary, 0.05),
           lineWidth: 1,
         },
         ticks: {
-          color: '#6b7280',
+          color: theme.palette.text.secondary,
           font: {
             size: 12,
             weight: 'normal',
@@ -595,7 +696,7 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
         title: {
           display: true,
           text: 'Amount ($)',
-          color: '#202124',
+          color: theme.palette.text.primary,
           font: {
             size: 14,
             weight: 'normal',
@@ -613,7 +714,7 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
       axis: 'x',
       intersect: false,
     },
-  }), [viewMode, formatCurrency, selectedPeriod]);
+  }), [viewMode, formatCurrency, selectedPeriod, theme.palette.text.primary, theme.palette.text.secondary, theme.palette.background.paper, theme.palette.grey]);
 
   // Memoize view toggle handler
   const handleViewModeChange = useCallback((mode: 'yearly' | 'monthly') => {
@@ -777,6 +878,14 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
               onChange={(e) => setShowNetInvestment(e.target.checked)}
             />
             Net Investment
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={showNoWithdrawals}
+              onChange={(e) => setShowNoWithdrawals(e.target.checked)}
+            />
+            Portfolio Without Withdrawals
           </label>
         </div>
       </div>
