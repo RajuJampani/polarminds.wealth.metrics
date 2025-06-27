@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -47,6 +47,7 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
   const [projectionYears] = useState(5);
   const [selectedPeriod, setSelectedPeriod] = useState<string>('MAX');
   const [autoProjectionEnabled, setAutoProjectionEnabled] = useState(false);
+  const [showNetInvestment, setShowNetInvestment] = useState(false); // Default to false
   const chartRef = useRef<ChartJS<'line'> | null>(null);
 
   // Memoize formatCurrency to prevent unnecessary re-creation
@@ -466,10 +467,14 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
       datasets.push(projectedDataset);
     }
     
-    datasets.push(historicalContributionsDataset);
-    
-    if (projectionData.contributions.length > 0) {
-      datasets.push(projectedContributionsDataset);
+    // Only add Net Investment datasets if showNetInvestment is enabled
+    if (showNetInvestment) {
+      datasets.push(historicalContributionsDataset);
+      
+      // Only add projected Net Investment if both projection and Net Investment are enabled
+      if (projectionData.contributions.length > 0 && showProjection) {
+        datasets.push(projectedContributionsDataset);
+      }
     }
     
     // Add market index data if available and MAX period is selected
@@ -479,7 +484,7 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
       labels: allLabels,
       datasets: datasets,
     };
-  }, [viewMode, data.yearlyData, data.monthlyData, filterDataByPeriod, generateProjectionData]);
+  }, [viewMode, data, selectedPeriod, showNetInvestment, showProjection, filterDataByPeriod, generateProjectionData]);
 
   // Memoize chart options to prevent unnecessary re-creation
   const chartOptions = useMemo((): ChartOptions<'line'> => ({
@@ -764,6 +769,14 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
               onChange={handleProjectionToggle}
             />
             Show Future Projection
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={showNetInvestment}
+              onChange={(e) => setShowNetInvestment(e.target.checked)}
+            />
+            Net Investment
           </label>
         </div>
       </div>

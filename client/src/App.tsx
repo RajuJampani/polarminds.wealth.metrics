@@ -1622,7 +1622,7 @@ function App() {
             <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
               <Box>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                  Based on historical S&P 500 returns
+                  Based on historical {availableIndices.find(i => i.id === primaryIndex)?.name || 'S&P 500'} returns
                 </Typography>
                 {sp500Data && (
                   <Typography variant="body2" color="text.secondary">
