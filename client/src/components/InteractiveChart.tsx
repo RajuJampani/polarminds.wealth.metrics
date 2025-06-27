@@ -773,7 +773,44 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
     }
     
     // Use the same filtering logic as the chart to ensure consistency
-    const filteredData = filterDataByPeriod(currentBaseData);
+    let filteredData = filterDataByPeriod(currentBaseData);
+    
+    // If showing projections, include projected data in calculations
+    if (showProjection) {
+      const projectionData = generateProjectionData();
+      if (projectionData.amounts.length > 0 && projectionData.contributions.length > 0) {
+        // Create projected data points in the same format as historical data
+        const projectedDataPoints = projectionData.amounts.map((amount, index) => {
+          const contribution = projectionData.contributions[index];
+          const lastHistoricalPoint = filteredData[filteredData.length - 1];
+          
+          // Calculate the projected year/month based on the projection index
+          let projectedYear, projectedMonth;
+          if (viewMode === 'yearly') {
+            projectedYear = (lastHistoricalPoint.year || new Date().getFullYear()) + index + 1;
+          } else {
+            const lastMonth = (lastHistoricalPoint.monthOfYear || lastHistoricalPoint.month || new Date().getMonth() + 1);
+            const lastYear = lastHistoricalPoint.year || new Date().getFullYear();
+            const totalMonths = lastMonth + index + 1;
+            projectedYear = lastYear + Math.floor((totalMonths - 1) / 12);
+            projectedMonth = ((totalMonths - 1) % 12) + 1;
+          }
+          
+          return {
+            year: projectedYear,
+            ...(viewMode === 'monthly' && { monthOfYear: projectedMonth, month: projectedMonth }),
+            amount: amount,
+            contributions: contribution,
+            netInvestment: contribution,
+            gains: amount - contribution,
+            roi: contribution > 0 ? (amount - contribution) / contribution : 0
+          };
+        });
+        
+        // Append projected data to filtered data
+        filteredData = [...filteredData, ...projectedDataPoints];
+      }
+    }
     
     if (filteredData.length === 0) {
       return {
@@ -791,29 +828,18 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
     const currentValue = lastPoint.amount;
     const startValue = firstPoint.amount;
     
-    // Calculate net investment for both points (assuming no withdrawals for simplicity)
-    const currentNetInvestment = lastPoint.contributions || lastPoint.amount || 0;
-    const startNetInvestment = firstPoint.contributions || firstPoint.amount || 0;
-    
     // Calculate net gains using the same method as Current Position: amount - netInvestment
-    const currentNetGains = currentValue - currentNetInvestment;
-    const startNetGains = startValue - startNetInvestment;
-    
-    // Calculate the change in net gains during the period
-    const netGainsChange = currentNetGains - startNetGains;
-    
-    // Calculate the change in net investment during the period
-    const netInvestmentChange = currentNetInvestment - startNetInvestment;
+    const currentNetGains = currentValue - startValue;
     
     // For percentage calculation, use the starting net investment as the base
-    const baseInvestment = startNetInvestment > 0 ? startNetInvestment : 1; // Avoid division by zero
+    const baseInvestment = startValue > 0 ? startValue : 1; // Avoid division by zero
     
     // Calculate percentage based on net gains change relative to base investment
-    const changePercent = (netGainsChange / baseInvestment) * 100;
+    const changePercent = (currentNetGains / baseInvestment) * 100;
 
     return {
       currentValue,
-      change: netGainsChange,
+      change: currentNetGains,
       changePercent,
       period: selectedPeriod,
       timeRange: filteredData.length > 1 ? 
@@ -823,7 +849,7 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
         (viewMode === 'yearly' ? firstPoint.year?.toString() : 
           new Date(firstPoint.year || new Date().getFullYear(), ((firstPoint as any).monthOfYear || (firstPoint as any).month) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }))
     };
-  }, [viewMode, data.yearlyData, data.monthlyData, selectedPeriod, filterDataByPeriod]);
+  }, [viewMode, data.yearlyData, data.monthlyData, selectedPeriod, filterDataByPeriod, showProjection, generateProjectionData]);
   
   const tempStats = useMemo(() => calculateTemporaryStats(), [calculateTemporaryStats]);
 
