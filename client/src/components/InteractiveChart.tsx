@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
   ChartOptions,
+  LegendItem,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { useTheme, alpha } from '@mui/material/styles';
@@ -51,6 +52,7 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
   const [autoProjectionEnabled, setAutoProjectionEnabled] = useState(false);
   const [showNetInvestment, setShowNetInvestment] = useState(false); // Default to false
   const [showNoWithdrawals, setShowNoWithdrawals] = useState(false); // Default to false
+  const [legendItems, setLegendItems] = useState<LegendItem[]>([]);
   const chartRef = useRef<ChartJS<'line'> | null>(null);
 
   // Memoize formatCurrency to prevent unnecessary re-creation
@@ -61,6 +63,20 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(value);
+  }, []);
+
+  // Handle custom legend item clicks
+  const handleLegendClick = useCallback((item: LegendItem) => {
+    const chart = chartRef.current;
+    if (chart && item.datasetIndex !== undefined) {
+      const datasetMeta = chart.getDatasetMeta(item.datasetIndex);
+      datasetMeta.hidden = datasetMeta.hidden === null ? !chart.data.datasets[item.datasetIndex].hidden : !datasetMeta.hidden;
+      chart.update();
+      // Update legend items to reflect visibility changes
+      if (chart.legend && chart.legend.legendItems) {
+        setLegendItems([...chart.legend.legendItems]);
+      }
+    }
   }, []);
 
   // Memoize getAvailablePeriods to prevent unnecessary re-creation
@@ -587,38 +603,25 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
     };
   }, [viewMode, data, selectedPeriod, showNetInvestment, showNoWithdrawals, showProjection, filterDataByPeriod, generateProjectionData, calculateNoWithdrawalsDataFromBase, marketData, primaryIndex, theme]);
 
+  // Capture legend items from chart
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (chart && chart.legend) {
+      setLegendItems(chart.legend.legendItems || []);
+    }
+  }, [chartData]);
+
   // Memoize chart options to prevent unnecessary re-creation
   const chartOptions = useMemo((): ChartOptions<'line'> => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
-          position: 'top' as const,
-          labels: {
-            usePointStyle: true,
-            pointStyle: 'circle',
-            padding: 20,
-            font: {
-              size: 14,
-              weight: 'normal',
-              family: 'Google Sans, Roboto, sans-serif',
-            },
-            color: theme.palette.text.secondary,
-          },
-        },
+        display: false, // Disable the default legend
+      },
       title: {
-          display: true,
-          text: `Investment Growth Over Time (${viewMode === 'yearly' ? 'Yearly' : 'Monthly'} View)`,
-          font: {
-            size: 18,
-            weight: 'normal',
-            family: 'Google Sans, Roboto, sans-serif',
-          },
-          color: theme.palette.text.primary,
-          padding: {
-            bottom: 30,
-          },
-        },
+        display: false, // Disable the default title
+      },
       tooltip: {
         mode: 'index',
         intersect: false,
@@ -889,7 +892,60 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
           </label>
         </div>
       </div>
-      
+        
+        {/* Custom Title */}
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '20px',
+          fontSize: '18px',
+          fontWeight: 'normal',
+          fontFamily: 'Google Sans, Roboto, sans-serif',
+          color: theme.palette.text.primary,
+        }}>
+          Investment Growth Over Time ({viewMode === 'yearly' ? 'Yearly' : 'Monthly'} View)
+        </div>
+        
+        {/* Custom Legend */}
+      <div className="custom-legend" style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: '20px',
+        marginBottom: '20px',
+        padding: '10px',
+      }}>
+        {legendItems.map((item, index) => (
+          <div
+            key={`${item.text}-${index}`}
+            onClick={() => handleLegendClick(item)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              cursor: 'pointer',
+              opacity: item.hidden ? 0.5 : 1,
+              fontSize: '12px',
+              fontFamily: 'Google Sans, Roboto, sans-serif',
+              color: theme.palette.text.secondary,
+            }}
+          >
+            <span
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                backgroundColor: item.fillStyle as string,
+                borderColor: item.strokeStyle as string,
+                borderWidth: item.lineWidth || 1,
+                borderStyle: 'solid',
+                marginRight: '8px',
+                display: 'inline-block',
+              }}
+            />
+            {item.text}
+          </div>
+        ))}
+      </div>
+
       <div className="chart-container">
         <Line ref={chartRef} data={chartData} options={chartOptions} />
       </div>
