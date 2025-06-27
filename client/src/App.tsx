@@ -1474,7 +1474,7 @@ function App() {
                             <Typography sx={{
                               fontSize: '0.75rem',
                               fontWeight: 600,
-                              color: transaction.type === 'withdrawal' ? '#ef4444' : '#10b981',
+                              color: transaction.type === 'withdrawal' ? 'error.main' : 'success.main',
                               lineHeight: 1.2
                             }}>
                               {new Date(transaction.date).toLocaleDateString('en-US', {
@@ -1484,7 +1484,7 @@ function App() {
                             <Typography sx={{
                               fontSize: '1.25rem',
                               fontWeight: 700,
-                              color: transaction.type === 'withdrawal' ? '#ef4444' : '#10b981',
+                              color: transaction.type === 'withdrawal' ? 'error.main' : 'success.main',
                               lineHeight: 1
                             }}>
                               {new Date(transaction.date).getDate()}
@@ -1518,7 +1518,7 @@ function App() {
                             <Typography sx={{
                               fontSize: '1.125rem',
                               fontWeight: 700,
-                              color: transaction.type === 'deposit' ? '#10b981' : '#ef4444'
+                              color: transaction.type === 'deposit' ? 'success.main' : 'error.main'
                             }}>
                               {transaction.type === 'withdrawal' ? '-' : '+'}${transaction.amount.toLocaleString()}
                             </Typography>
@@ -1530,7 +1530,7 @@ function App() {
                                   removeTransaction(originalIndex);
                                 }}
                                 sx={{
-                                  color: '#ef4444',
+                                  color: 'error.main',
                                   '&:hover': {
                                     bgcolor: '#fee2e2'
                                   }
@@ -1580,12 +1580,12 @@ function App() {
                           {formatCurrency(tempStats.currentValue)}
                         </Typography>
                         <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, fontSize: '13px', fontWeight: 600, letterSpacing: '.01em' }}>
-                          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1.5, py: 0.5, borderRadius: '8px', ...(tempStats.change >= 0 ? { background: '#bee4c9', color: '#166534' } : { background: '#ffe8e6', color: '#991b1b' }) }}>
+                          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1.5, py: 0.5, borderRadius: '8px', ...(tempStats.change >= 0 ? { background: '#bee4c9', color: 'success.main' } : { background: '#ffe8e6', color: 'error.main' }) }}>
                             {tempStats.change >= 0 ? <TrendingUpIcon fontSize="small" /> : <TrendingDownIcon fontSize="small" />}
                             <span>{Math.abs(tempStats.changePercent).toFixed(2)}%</span>
                           </Box>
-                          <span style={{ ...(tempStats.change >= 0 ? { color: '#166534' } : { color: '#991b1b' }) }}>{tempStats.change >= 0 ? '+' : ''}{formatCurrency(tempStats.change)}</span>
-                          <span style={{ ...(tempStats.change >= 0 ? { color: '#166534' } : { color: '#991b1b' }) }}>{tempStats.period}</span>
+                          <span style={{ ...(tempStats.change >= 0 ? { color: '#34a853' } : { color: '#ea4335' }) }}>{tempStats.change >= 0 ? '+' : ''}{formatCurrency(tempStats.change)}</span>
+                          <span style={{ ...(tempStats.change >= 0 ? { color: '#34a853' } : { color: '#ea4335' }) }}>{tempStats.period}</span>
                         </Box>
                       </Box>
                       {tempStats.timeRange && (
@@ -1597,7 +1597,7 @@ function App() {
                             <Typography variant="body2" sx={{ color: '#374151', fontSize: '11px', fontWeight: 600 }}>
                               {availableIndices.find(i => i.id === primaryIndex)?.name || 'S&P 500'}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: '#059669', fontSize: '11px', fontWeight: 700 }}>
+                            <Typography variant="body2" sx={{ color: 'success.main', fontSize: '11px', fontWeight: 700 }}>
                               {((availableIndices.find(i => i.id === primaryIndex)?.averageReturn || 0.10) * 100).toFixed(1)}%
                             </Typography>
                           </Box>
