@@ -40,6 +40,15 @@ import './App.css';
 
 // Google Finance-inspired theme
 const theme = createTheme({
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 900,
+      lg: 1356,
+      xl: 1420,
+    },
+  },
   palette: {
     primary: {
       main: '#1a73e8',
@@ -906,7 +915,7 @@ function App() {
                    </Box>
                  </Box>
                ) : (calculationResult || transactions.length === 0) && (
-                 <Box sx={{ mt: 4 }}>
+                 <Box sx={{ mt: { xl: 4 } }}>
                   {/* Market Index Selection */}
                   {availableIndices.length > 0 && (
                     <Card sx={{ p: 3, mb: 3 }}>
@@ -1144,7 +1153,8 @@ function App() {
               order: { xs: -1, lg: 0 },
               display: 'flex',
               flexDirection: 'column',
-              gap: { xs: 2, sm: 3 }
+              gap: { xs: 2, sm: 3 },
+              mb: { xl: 3 },
             }}>
               {/* Add Transactions - Mobile/Tablet Only */}
               <Box sx={{ display: { xs: 'block', lg: 'none' } }}>
@@ -1167,7 +1177,7 @@ function App() {
               <Card sx={{ 
                 p: { xs: 2, sm: 3 }, 
                 height: '100%',
-                maxHeight: { xs: 800, lg: 992 },
+                maxHeight: { xs: 800, lg: 1044, xl: 992 },
                 display: 'flex',
                 flexDirection: 'column'
               }}>
@@ -1543,7 +1553,7 @@ function App() {
 
 
           {/* Chart Section - Always Visible */}
-          <Card sx={{ p: 3, mt: 3 }}>
+          <Card sx={{ p: 3, mt: 1 }}>
             {loading ? (
               <Box>
                 <Box sx={{ mb: 2 }}>
@@ -1569,9 +1579,9 @@ function App() {
                         <Typography variant="h4" sx={{ fontWeight: 400, background: 'linear-gradient(135deg, #1a1a1a 0%, #374151 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                           {formatCurrency(tempStats.currentValue)}
                         </Typography>
-                        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, fontSize: '13px', fontWeight: 600, letterSpacing: '.03em' }}>
-                          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1.5, py: 0.5, borderRadius: '8px', ...(tempStats.change >= 0 ? { background: 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)', color: '#166534', border: '1px solid #86efac' } : { background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#991b1b', border: '1px solid #fca5a5' }) }}>
-                            <span>{tempStats.change >= 0 ? '↑' : '↓'}</span>
+                        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, fontSize: '13px', fontWeight: 600, letterSpacing: '.01em' }}>
+                          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1.5, py: 0.5, borderRadius: '8px', ...(tempStats.change >= 0 ? { background: '#bee4c9', color: '#166534' } : { background: '#ffe8e6', color: '#991b1b' }) }}>
+                            {tempStats.change >= 0 ? <TrendingUpIcon fontSize="small" /> : <TrendingDownIcon fontSize="small" />}
                             <span>{Math.abs(tempStats.changePercent).toFixed(2)}%</span>
                           </Box>
                           <span style={{ ...(tempStats.change >= 0 ? { color: '#166534' } : { color: '#991b1b' }) }}>{tempStats.change >= 0 ? '+' : ''}{formatCurrency(tempStats.change)}</span>
@@ -1608,7 +1618,7 @@ function App() {
           </Card>
 
           {/* Footer */}
-          <Box sx={{ mt: 6, pt: 4, borderTop: '1px solid', borderColor: 'grey.200' }}>
+          <Box sx={{ mt: 3, pt: 4, borderTop: '1px solid', borderColor: 'grey.200' }}>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
               <Box>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
