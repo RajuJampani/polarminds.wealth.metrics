@@ -1,7 +1,7 @@
 {
-  "name": "compound-calculator-server",
+  "name": "wealth-metrics-server",
   "version": "1.0.0",
-  "description": "Backend API for compound interest calculator",
+  "description": "Backend API for wealth metrics calculator",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

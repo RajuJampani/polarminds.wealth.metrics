@@ -1,6 +1,6 @@
 # TypeScript Migration Summary
 
-This document outlines the successful conversion of the compound interest calculator project from a mixed JavaScript/TypeScript setup to a fully TypeScript-based architecture.
+This document outlines the successful conversion of the wealth metrics calculator project from a mixed JavaScript/TypeScript setup to a fully TypeScript-based architecture.
 
 ## What Was Changed
 
@@ -85,7 +85,7 @@ npm start        # Start React development server (already TypeScript)
 ## Project Structure
 
 ```
-polarminds.investor.compound/
+polarminds.wealth.metrics/
 ├── client/
 │   ├── src/
 │   │   ├── shared-types.ts          # Shared type definitions

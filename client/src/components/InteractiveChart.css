@@ -124,7 +124,6 @@
   transition: all 0.2s ease;
   background: #3b82f6;
   color: white;
-  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.03);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,12 +134,10 @@
 .reset-zoom-btn:hover {
   background: #2563eb;
   transform: translateY(-1px);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .reset-zoom-btn:active {
   transform: translateY(0);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .auto-projection-notice {
@@ -223,7 +220,6 @@
   border-radius: 50%;
   background: #3b82f6;
   cursor: pointer;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
 .projection-years input[type="range"]::-moz-range-thumb {
@@ -233,7 +229,6 @@
   background: #3b82f6;
   cursor: pointer;
   border: none;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
 .projection-years span {
@@ -261,10 +256,7 @@
   font-family: inherit;
   text-align: right;
   font-weight: 800;
-  background: linear-gradient(135deg, #1a1a1a 0%, #374151 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #1a1a1a;
 }
 
 .temp-stats-header .temp-stats-change {
@@ -278,18 +270,17 @@
   line-height: 1;
   font-family: inherit;
   margin-bottom: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   backdrop-filter: blur(10px);
 }
 
 .temp-stats-header .temp-stats-change.positive {
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  background-color: #dcfce7;
   color: #166534;
   border: 1px solid #86efac;
 }
 
 .temp-stats-header .temp-stats-change.negative {
-  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+  background-color: #fef2f2;
   color: #991b1b;
   border: 1px solid #fca5a5;
 }
@@ -377,7 +368,7 @@
 }
 
 .projection-notice {
-  background: linear-gradient(135deg, #e8f0fe 0%, #f8f9ff 100%);
+  background-color: #e8f0fe;
   border: 1px solid #1a73e8;
   border-radius: 8px;
   padding: 16px 20px;
@@ -388,7 +379,6 @@
   font-style: normal;
   border-left: 4px solid #1a73e8;
   font-family: 'Google Sans', 'Roboto', sans-serif;
-  box-shadow: 0 1px 2px rgba(26, 115, 232, 0.03);
   position: relative;
   overflow: hidden;
 }
@@ -402,7 +392,6 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  text-shadow: 0 1px 2px rgba(26, 115, 232, 0.1);
 }
 
 /* Chart.js custom styles */
@@ -515,7 +504,6 @@
 .checkbox-label:hover input[type="checkbox"] {
   border-color: #1a73e8;
   transform: scale(1.05);
-  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.03);
 }
 
 .projection-years input[type="range"]:hover::-webkit-slider-thumb {

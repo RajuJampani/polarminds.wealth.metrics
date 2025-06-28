@@ -1,10 +1,10 @@
-# 📈 Compound Interest Calculator
+# 📈 Wealth Metrics Calculator
 
-A modern, real-time compound interest calculator that uses S&P 500 historical trends to project investment growth. Built with React, TypeScript, and Node.js.
+A modern, real-time wealth metrics calculator that uses S&P 500 historical trends to project investment growth. Built with React, TypeScript, and Node.js.
 
 ## ✨ Features
 
-- **Real-time Calculations**: Instant compound interest calculations based on S&P 500 historical data
+- **Real-time Calculations**: Instant wealth metrics calculations based on S&P 500 historical data
 - **Interactive Charts**: Drag and explore future projections with Chart.js
 - **Modern UI**: Clean, responsive design with smooth animations
 - **Investment Tracking**: Track initial investments, monthly contributions, and ROI
@@ -44,8 +44,8 @@ The calculator uses S&P 500 historical average returns (~10% annually) with simu
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd polarminds.investor.compound
+   git clone https://github.com/RajuJampani/polarminds.wealth.metrics.git
+   cd polarminds.wealth.metrics
    ```
 
 2. **Install all dependencies**
