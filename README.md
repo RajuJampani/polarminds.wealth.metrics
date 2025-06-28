@@ -1,6 +1,6 @@
 # 📈 Wealth Metrics Calculator
 
-A modern, real-time wealth metrics calculator that uses S&P 500 historical trends to project investment growth. Built with React, TypeScript, and Node.js.
+A modern, real-time wealth metrics calculator that uses S&P 500 historical trends to project investment growth. Built with React, TypeScript, and Node.js with a fully TypeScript-based architecture and shared type system.
 
 ## ✨ Features
 
@@ -10,25 +10,53 @@ A modern, real-time wealth metrics calculator that uses S&P 500 historical trend
 - **Investment Tracking**: Track initial investments, monthly contributions, and ROI
 - **Future Projections**: Visualize potential growth with interactive projections
 - **Mobile Responsive**: Works seamlessly on all devices
+- **Type Safety**: Full TypeScript implementation with shared types between client and server
+- **Developer Experience**: Enhanced IDE support with autocomplete and refactoring
 
 ## 🚀 Tech Stack
 
 ### Frontend
 - **React 18** with TypeScript
-- **Chart.js** for interactive visualizations
+- **Material-UI (MUI)** for modern component library
+- **Chart.js** with react-chartjs-2 for interactive visualizations
 - **Axios** for API communication
 - **CSS3** with modern styling and animations
+- **React Router** for navigation
 
 ### Backend
-- **Node.js** with Express
+- **Node.js** with Express and TypeScript
+- **ts-node** for TypeScript execution
 - **CORS** for cross-origin requests
 - **Node-Cache** for data caching
 - **Axios** for external API calls
+- **dotenv** for environment configuration
 
-## 📊 Data Source
+### Development Tools
+- **TypeScript** compiler with strict configuration
+- **Shared type definitions** between client and server
+- **Nodemon** for development hot-reloading
+- **Concurrently** for running multiple development servers
 
-The calculator uses S&P 500 historical average returns (~10% annually) with simulated volatility for realistic projections. In production, this can be easily integrated with real financial APIs like:
+## 📊 Data Source & Architecture
 
+The calculator uses S&P 500 historical average returns (~10% annually) with simulated volatility for realistic projections. The application features a robust TypeScript architecture with:
+
+### Type System
+- **Shared Types**: Consistent type definitions between client and server
+- **API Interfaces**: Strongly typed request/response objects
+- **Data Models**: Comprehensive interfaces for financial calculations
+- **Error Handling**: Typed error responses and validation
+
+### Key Type Definitions
+- `Transaction`: Financial transaction interface
+- `CalculationResult`: Compound interest calculation results
+- `MarketDataResponse`: Market index data structure
+- `HistoricalDataPoint`: Historical market data points
+- `MonthlyDataPoint` & `YearlyDataPoint`: Time-series calculation data
+- `CalculationSummary`: Investment summary statistics
+
+### External API Integration
+In production, this can be easily integrated with real financial APIs:
 - Alpha Vantage
 - Yahoo Finance API
 - IEX Cloud
@@ -39,6 +67,7 @@ The calculator uses S&P 500 historical average returns (~10% annually) with simu
 ### Prerequisites
 - Node.js (v16 or higher)
 - npm or yarn
+- TypeScript knowledge recommended
 
 ### Quick Start
 
@@ -59,8 +88,25 @@ The calculator uses S&P 500 historical average returns (~10% annually) with simu
    ```
 
    This will start:
-   - Backend server on `http://localhost:5000`
-   - Frontend development server on `http://localhost:3000`
+   - Backend TypeScript server on `http://localhost:5000`
+   - Frontend React development server on `http://localhost:3000`
+
+### TypeScript Development
+
+**Server Development:**
+```bash
+cd server
+npm run dev      # Run TypeScript directly with ts-node
+npm run build    # Compile TypeScript to JavaScript
+npm start        # Run compiled JavaScript
+```
+
+**Client Development:**
+```bash
+cd client
+npm start        # Start React development server (TypeScript enabled)
+npm run build    # Build for production
+```
 
 ### Manual Installation
 
@@ -191,8 +237,17 @@ Calculates compound interest based on input parameters.
 ## 🚀 Deployment
 
 ### Build for Production
+
+**Full Application:**
 ```bash
-npm run build
+npm run build    # Builds client for production
+```
+
+**Server Only:**
+```bash
+cd server
+npm run build    # Compiles TypeScript to JavaScript
+npm start        # Runs compiled production server
 ```
 
 ### Environment Variables
@@ -200,7 +255,39 @@ Create a `.env` file in the server directory:
 ```
 PORT=5000
 FINANCIAL_API_KEY=your_api_key_here
+NODE_ENV=production
 ```
+
+### Project Structure
+```
+polarminds.wealth.metrics/
+├── client/
+│   ├── src/
+│   │   ├── shared-types.ts          # Shared type definitions
+│   │   ├── App.tsx                  # Main app (uses shared types)
+│   │   ├── components/              # React components
+│   │   └── pages/                   # Page components
+│   ├── build/                       # Production build output
+│   └── tsconfig.json                # Client TypeScript config
+├── server/
+│   ├── src/
+│   │   ├── index.ts                 # Main server file (TypeScript)
+│   │   └── shared-types.ts          # Shared type definitions
+│   ├── dist/                        # Compiled JavaScript output
+│   ├── tsconfig.json                # Server TypeScript config
+│   └── .env.example                 # Environment template
+├── shared-types.js                  # Compiled shared types
+└── TYPESCRIPT_MIGRATION.md          # Migration documentation
+```
+
+## 🔧 TypeScript Benefits
+
+✅ **Type Safety**: Full compile-time type checking across the entire application
+✅ **Code Quality**: Eliminated potential runtime errors through static analysis
+✅ **Developer Experience**: Enhanced IDE support with autocomplete and refactoring
+✅ **Maintainability**: Consistent type definitions shared between client and server
+✅ **Documentation**: Types serve as living documentation for the API
+✅ **Refactoring**: Safe code refactoring with TypeScript compiler verification
 
 ## 🤝 Contributing
 
