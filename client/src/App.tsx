@@ -1580,12 +1580,12 @@ function App() {
                           {formatCurrency(tempStats.currentValue)}
                         </Typography>
                         <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, fontSize: '13px', fontWeight: 600, letterSpacing: '.01em' }}>
-                          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1.5, py: 0.5, borderRadius: '8px', ...(tempStats.change >= 0 ? { background: '#bee4c9', color: 'success.main' } : { background: '#ffe8e6', color: 'error.main' }) }}>
+                          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1.5, py: 0.5, borderRadius: '8px', ...(tempStats.change >= 0 ? { bgcolor: 'success.50', color: 'success.main' } : { background: '#ffe8e6', color: 'error.main' }) }}>
                             {tempStats.change >= 0 ? <TrendingUpIcon fontSize="small" /> : <TrendingDownIcon fontSize="small" />}
                             <span>{Math.abs(tempStats.changePercent).toFixed(2)}%</span>
                           </Box>
-                          <span style={{ ...(tempStats.change >= 0 ? { color: '#34a853' } : { color: '#ea4335' }) }}>{tempStats.change >= 0 ? '+' : ''}{formatCurrency(tempStats.change)}</span>
-                          <span style={{ ...(tempStats.change >= 0 ? { color: '#34a853' } : { color: '#ea4335' }) }}>{tempStats.period}</span>
+                          <Typography sx={{ fontWeight: 600, ...(tempStats.change >= 0 ? { color: 'success.main' } : { color: 'error.main' }) }}>{tempStats.change >= 0 ? '+' : ''}{formatCurrency(tempStats.change)}</Typography>
+                          <Typography sx={{ fontWeight: 600, ...(tempStats.change >= 0 ? { color: 'success.main' } : { color: 'error.main' }) }}>{tempStats.period}</Typography>
                         </Box>
                       </Box>
                       {tempStats.timeRange && (

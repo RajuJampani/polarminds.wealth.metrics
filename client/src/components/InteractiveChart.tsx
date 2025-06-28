@@ -416,14 +416,6 @@ const InteractiveChart: React.FC<InteractiveChartProps> = ({
     
     const filteredData = filterDataByPeriod(currentBaseData);
     const projectionData = generateProjectionData();
-    
-    // Debug: Log the data discrepancy
-    if (filteredData.length > 0) {
-      const lastDataPoint = filteredData[filteredData.length - 1];
-      console.log('Chart last data point:', lastDataPoint.amount);
-      console.log('Summary final amount:', data.summary?.finalAmount);
-      console.log('Data mismatch:', lastDataPoint.amount !== data.summary?.finalAmount);
-    }
 
     const historicalLabels = filteredData.map((item, index) => {
        if (viewMode === 'yearly') {
